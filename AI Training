@@ -1,0 +1,56 @@
+import random
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import make_pipeline
+
+class SensitiveDataAI:
+    def __init__(self, training_data):
+        """
+        Initialize the AI with training data and create a machine learning model.
+        The model is trained to differentiate between sensitive and non-sensitive data.
+        """
+        self.model = self.train_model(training_data)
+
+    def train_model(self, training_data):
+        """
+        Trains a machine learning model using the provided training data.
+        """
+        # Vectorizing the data and training a Naive Bayes classifier
+        texts, labels = zip(*training_data)
+        model = make_pipeline(TfidfVectorizer(), MultinomialNB())
+        model.fit(texts, labels)
+        return model
+
+    def analyze(self, text):
+        """
+        Uses the trained model to analyze and predict whether text is sensitive.
+        """
+        prediction = self.model.predict([text])[0]
+        return prediction == 'sensitive'
+
+# Example training data
+training_data = [
+    ("Your credit card number is 1234-5678-9012-3456", 'sensitive'),
+    ("Meeting at 10 AM tomorrow", 'not_sensitive'),
+    ("Password for the account is abc123", 'sensitive'),
+    ("Lunch menu for today includes pizza", 'not_sensitive'),
+    ("Social security number: 234-60-1422", 'sensitive'),
+    ("Regular system update completed", 'not_sensitive')
+]
+
+# Example usage
+if __name__ == "__main__":
+    ai = SensitiveDataAI(training_data)
+    test_data = [
+        "This document contains the private financial statements.",
+        "Project meeting scheduled at 3 PM.",
+        "User's PIN code is 9823.",
+        "Weather forecast shows rain tomorrow.",
+        "Confidential: Employee salary details."
+    ]
+
+    for data in test_data:
+        if ai.analyze(data):
+            print(f"Sensitive data detected: {data}")
+        else:
+            print(f"Data is not sensitive: {data}")
