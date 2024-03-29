@@ -1,0 +1,69 @@
+import tkinter as tk
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+class AlertSystem:
+    def __init__(self, email_config, gui_root):
+        self.email_config = email_config
+        self.gui_root = gui_root
+
+    def send_alert(self, data_item, severity):
+        message = self.create_alert_message(data_item, severity)
+        if severity == 'high':
+            self.send_email(message)
+            self.show_popup(message, data_item)
+
+    def create_alert_message(self, data_item, severity):
+        return f"Alert [Severity: {severity}]: Suspicious activity detected with data: {data_item}"
+
+    def send_email(self, message):
+        msg = MIMEMultipart()
+        msg['From'] = self.email_config['from']
+        msg['To'] = self.email_config['to']
+        msg['Subject'] = 'DataGuard Alert: Suspicious Activity Detected'
+        msg.attach(MIMEText(message, 'plain'))
+
+        server = smtplib.SMTP(self.email_config['smtp_server'], self.email_config['smtp_port'])
+        server.starttls()
+        server.login(self.email_config['from'], self.email_config['password'])
+        server.send_message(msg)
+        server.quit()
+        print("Alert email sent.")
+
+    def show_popup(self, message, data_item):
+        popup = tk.Toplevel(self.gui_root)
+        popup.title("DataGuard Alert")
+        label = tk.Label(popup, text=message, padx=20, pady=20)
+        label.pack()
+
+        def allow_data():
+            print(f"Data allowed: {data_item}")
+            popup.destroy()
+
+        def block_data():
+            print(f"Data blocked: {data_item}")
+            popup.destroy()
+
+        allow_button = tk.Button(popup, text="Allow", command=allow_data)
+        allow_button.pack(side=tk.LEFT, padx=(20, 10), pady=20)
+
+        block_button = tk.Button(popup, text="Block", command=block_data)
+        block_button.pack(side=tk.RIGHT, padx=(10, 20), pady=20)
+
+# Example usage
+if __name__ == "__main__":
+    email_config = {
+        'from': 'alert@dataguard.com',
+        'to': 'user@example.com',
+        'smtp_server': 'smtp.example.com',
+        'smtp_port': 587,
+        'password': 'email_password'
+    }
+
+    root = tk.Tk()
+    root.withdraw()  # Hide the main window
+    alert_system = AlertSystem(email_config, root)
+    data_item = "User's credit card number is 1234-5678-9012-3456"
+    alert_system.send_alert(data_item, 'high')
+    root.mainloop()
