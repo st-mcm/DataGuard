@@ -1,0 +1,66 @@
+import requests
+import random
+
+class DataGuard:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.monitored_data = []
+        self.suspicious_activities = []
+        self.rules_engine = RulesEngine(api_key)
+        self.logger = Logger()
+
+    def monitor_network_traffic(self):
+        while True:
+            data = self.fetch_network_data()
+            self.analyze_data(data)
+
+    def fetch_network_data(self):
+        # Simulate network data fetching
+        return ["network_data_{}".format(random.randint(1, 100)) for _ in range(5)]
+
+    def analyze_data(self, data):
+        for item in data:
+            if self.rules_engine.is_sensitive_data(item):
+                self.monitored_data.append(item)
+                self.logger.log(f"Sensitive data detected: {item}")
+                if self.rules_engine.is_suspicious_activity(item):
+                    self.flag_as_suspicious(item)
+
+    def flag_as_suspicious(self, data_item):
+        self.suspicious_activities.append(data_item)
+        self.alert_user(data_item)
+        self.logger.log(f"Suspicious activity flagged: {data_item}")
+
+    def alert_user(self, data_item):
+        notification_response = self.send_alert_notification(data_item)
+        print(f"ALERT: Suspicious activity detected: {data_item}, Notification sent: {notification_response}")
+
+    def send_alert_notification(self, data_item):
+        alert_api_url = "https://api.dataguard/alerts"
+        response = requests.post(alert_api_url, json={'api_key': self.api_key, 'data_item': data_item})
+        return response.status_code == 200
+
+class RulesEngine:
+    def __init__(self, api_key):
+        self.api_key = api_key
+
+    def is_sensitive_data(self, data_item):
+        # API call to check data sensitivity
+        sensitivity_api_url = "https://api.dataguard/sensitivity_check"
+        response = requests.post(sensitivity_api_url, json={'api_key': self.api_key, 'data_item': data_item})
+        return response.json().get('is_sensitive', False)
+
+    def is_suspicious_activity(self, data_item):
+        # API call to determine if activity is suspicious
+        suspicious_api_url = "https://api.dataguard/suspicious_activity_check"
+        response = requests.post(suspicious_api_url, json={'api_key': self.api_key, 'data_item': data_item})
+        return response.json().get('is_suspicious', False)
+
+class Logger:
+    def log(self, message):
+        print(f"LOG: {message}")
+
+if __name__ == "__main__":
+    api_key = "your_api_key_here"
+    dataguard = DataGuard(api_key)
+    dataguard.monitor_network_traffic()
